@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './Header.css';
 import { useNavigate } from 'react-router-dom';
+import logo from "../../logo.jpg";
 
 const Header = ({ role }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,7 +14,7 @@ const Header = ({ role }) => {
         <header className="header">
             <div className="header-container">
                 <div className="logo">
-                    <h1>Event Mgt</h1>
+                <img src={logo} alt="Logo" style={{ width: "100px", height: "50px" }} />
                 </div>
 
                 <div className="user-section">
