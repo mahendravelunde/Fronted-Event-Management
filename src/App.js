@@ -1,24 +1,39 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Auth/Login';
+import Signup from './pages/Auth/Signup';
+import AddEvent from './pages/Events/AddEvent';
+import EventList from './pages/Events/EventList';
+import ProtectedRoute from './components/ProtectedRoute';
+
 
 function App() {
+  
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route
+          path="/events"
+          element={
+            <ProtectedRoute>
+              
+              <EventList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/add-event"
+          element={
+            <ProtectedRoute>
+              <AddEvent />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/" element={<Navigate to="/login" />} />
+      </Routes>
+    </Router>
   );
 }
 
