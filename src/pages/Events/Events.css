@@ -302,3 +302,12 @@
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
 }
+
+.center-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-weight: bold;
+  text-align: center;
+}

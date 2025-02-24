@@ -101,6 +101,7 @@ const EventList = () => {
         {/* <div className='header-flex'>
           <h4 className="events-title">All Events</h4>
         </div> */}
+
         <div className="header-flex">
           <h4 className="events-title">All Events</h4>
           <div>
@@ -115,131 +116,138 @@ const EventList = () => {
           </div>
         </div>
 
-        <div className="events-grid">
-          {events?.events?.map((event, index) => (
-            <div key={index + 1} className="event-card">
-              <a
-                href={event.eventWebLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="web-link-button"
-              >
-                <div className="event-image-container">
-                  {event.eventType === 'video' && (
-                    <div className="play-button">
-                      <div className="play-icon"></div>
+        {
+          
+          events?.events?.length === 0 ? <div className="center-container">No data found </div>:
+            <>
+
+              <div className="events-grid">
+                {events?.events?.map((event, index) => (
+                  <div key={index + 1} className="event-card">
+                    <a
+                      href={event.eventWebLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="web-link-button"
+                    >
+                      <div className="event-image-container">
+                        {event.eventType === 'video' && (
+                          <div className="play-button">
+                            <div className="play-icon"></div>
+                          </div>
+                        )}
+                        <img src={`http://localhost:5000/uploads/${event.eventFile}`} alt={event.eventName} className="event-image" />
+
+                      </div>
+                    </a>
+                    <div className="event-details">
+                      <div className="event-header">
+                        <span className="event-label">Event Name :</span>
+                        <span className="event-name">{event.eventName}</span>
+                      </div>
+                      <div className="event-info">
+                        <div className="event-date">Created Date - {event.eventDate}</div>
+                        <div className="event-attendees">
+                          <span className="attendees-label">Attendees</span>
+                          {/* <span className="attendees-list">{event.attendees}</span> */}
+                        </div>
+                      </div>
+                      {
+                        role == "admin" ? <div className="event-actions">
+                          <button className="edit-button" onClick={() => setEditEvent(event)}>Edit</button>
+                          <button className="delete-button" onClick={() => handleDelete(event._id)}>Delete</button>
+                        </div> : ""
+                      }
+
                     </div>
-                  )}
-                  <img src={`http://localhost:5000/uploads/${event.eventFile}`} alt={event.eventName} className="event-image" />
 
-                </div>
-              </a>
-              <div className="event-details">
-                <div className="event-header">
-                  <span className="event-label">Event Name :</span>
-                  <span className="event-name">{event.eventName}</span>
-                </div>
-                <div className="event-info">
-                  <div className="event-date">Created Date - {event.eventDate}</div>
-                  <div className="event-attendees">
-                    <span className="attendees-label">Attendees</span>
-                    {/* <span className="attendees-list">{event.attendees}</span> */}
                   </div>
-                </div>
-                {
-                  role == "admin" ? <div className="event-actions">
-                    <button className="edit-button" onClick={() => setEditEvent(event)}>Edit</button>
-                    <button className="delete-button" onClick={() => handleDelete(event._id)}>Delete</button>
-                  </div> : ""
-                }
-
+                ))}
               </div>
 
-            </div>
-          ))}
-        </div>
-
-        <div className="pagination">
-          <button disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</button>
-          <span>Page {page} of {totalPages}</span>
-          <button disabled={page === totalPages} onClick={() => setPage(page + 1)}>Next</button>
-        </div>
-
-
-        {editEvent && (
-          <>
-            <div className="modal-overlay" onClick={() => setEditEvent(null)}></div>
-            <div className="edit-modal">
-              <h3>Edit Event</h3>
-
-              <input
-                type="text"
-                placeholder="Event Name"
-                value={editEvent.eventName}
-                onChange={(e) => setEditEvent({ ...editEvent, eventName: e.target.value })}
-              />
-
-              <input
-                type="date"
-                value={new Date(editEvent.eventDate).toISOString().split("T")[0]}
-                onChange={(e) => setEditEvent({ ...editEvent, eventDate: e.target.value })}
-              />
-
-              <div className="radio-group">
-                <label>
-                  <input
-                    type="radio"
-                    value="image"
-                    checked={editEvent.eventType === 'image'}
-                    onChange={(e) => setEditEvent({ ...editEvent, eventType: e.target.value })}
-                  />
-                  Image
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    value="video"
-                    checked={editEvent.eventType === 'video'}
-                    onChange={(e) => setEditEvent({ ...editEvent, eventType: e.target.value })}
-                  />
-                  Video
-                </label>
+              <div className="pagination">
+                <button disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</button>
+                <span>Page {page} of {totalPages}</span>
+                <button disabled={page === totalPages} onClick={() => setPage(page + 1)}>Next</button>
               </div>
 
-              <div className="file-upload">
-                <label>Event File</label>
-                <input
-                  type="file"
-                  className="file-input"
-                  onChange={(e) => setEditEvent({ ...editEvent, eventFile: e.target.files[0] })}
-                />
-              </div>
 
-              <div className="file-upload">
-                <label>Attendee List (Excel)</label>
-                <input
-                  className="file-input"
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={(e) => setEditEvent({ ...editEvent, attendees: e.target.files[0] })}
-                />
-              </div>
+              {editEvent && (
+                <>
+                  <div className="modal-overlay" onClick={() => setEditEvent(null)}></div>
+                  <div className="edit-modal">
+                    <h3>Edit Event</h3>
 
-              <input
-                type="url"
-                placeholder="Event Web Link"
-                value={editEvent.eventWebLink}
-                onChange={(e) => setEditEvent({ ...editEvent, eventWebLink: e.target.value })}
-              />
+                    <input
+                      type="text"
+                      placeholder="Event Name"
+                      value={editEvent.eventName}
+                      onChange={(e) => setEditEvent({ ...editEvent, eventName: e.target.value })}
+                    />
 
-              <button onClick={() => handleUpdateEvent(editEvent)}>Save</button>
-              <button onClick={() => setEditEvent(null)}>Cancel</button>
-            </div>
-          </>
-        )}
+                    <input
+                      type="date"
+                      value={new Date(editEvent.eventDate).toISOString().split("T")[0]}
+                      onChange={(e) => setEditEvent({ ...editEvent, eventDate: e.target.value })}
+                    />
+
+                    <div className="radio-group">
+                      <label>
+                        <input
+                          type="radio"
+                          value="image"
+                          checked={editEvent.eventType === 'image'}
+                          onChange={(e) => setEditEvent({ ...editEvent, eventType: e.target.value })}
+                        />
+                        Image
+                      </label>
+                      <label>
+                        <input
+                          type="radio"
+                          value="video"
+                          checked={editEvent.eventType === 'video'}
+                          onChange={(e) => setEditEvent({ ...editEvent, eventType: e.target.value })}
+                        />
+                        Video
+                      </label>
+                    </div>
+
+                    <div className="file-upload">
+                      <label>Event File</label>
+                      <input
+                        type="file"
+                        className="file-input"
+                        onChange={(e) => setEditEvent({ ...editEvent, eventFile: e.target.files[0] })}
+                      />
+                    </div>
+
+                    <div className="file-upload">
+                      <label>Attendee List (Excel)</label>
+                      <input
+                        className="file-input"
+                        type="file"
+                        accept=".xlsx,.xls"
+                        onChange={(e) => setEditEvent({ ...editEvent, attendees: e.target.files[0] })}
+                      />
+                    </div>
+
+                    <input
+                      type="url"
+                      placeholder="Event Web Link"
+                      value={editEvent.eventWebLink}
+                      onChange={(e) => setEditEvent({ ...editEvent, eventWebLink: e.target.value })}
+                    />
+
+                    <button onClick={() => handleUpdateEvent(editEvent)}>Save</button>
+                    <button onClick={() => setEditEvent(null)}>Cancel</button>
+                  </div>
+                </>
+              )}
 
 
-        <ToastContainer />
+              <ToastContainer />
+            </>
+        }
       </div>
     </>
   );
