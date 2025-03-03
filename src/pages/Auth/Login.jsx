@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Auth.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ClipLoader from "react-spinners/ClipLoader";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -11,17 +12,12 @@ const Login = () => {
   });
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  console.log("API BASE URL:", process.env.REACT_APP_API_BASE_URL);
-
-  // useEffect(()=>{
-  //   localStorage.clear();
-  //   console.log("localstorage",localStorage)
-  // },[])
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(""); 
-
+    setLoading(true);
     try {
       const response = await fetch(
         `${process.env.REACT_APP_API_BASE_URL}/auth/login`,
@@ -37,18 +33,18 @@ const Login = () => {
       const data = await response.json();
 
       if (!response.ok) {
-         toast.error(data.error || "Login failed");
-        // throw new Error(data.error || "Login failed");
-      }else{
+        toast.error(data.error || "Login failed");
+        setLoading(false);
+      } else {
         localStorage.setItem("token", data.token); // Store token
         navigate("/events"); // Redirect on success
-        toast.success("Login successfull");
+        toast.success("Login successful");
+        setLoading(false);
       }
-
-      
     } catch (err) {
-      toast.error(err.message|| "Login failed");
+      toast.error(err.message || "Login failed");
       setError(err.message);
+      setLoading(false);
     }
   };
 
@@ -61,17 +57,19 @@ const Login = () => {
           type="email"
           placeholder="Email"
           value={formData.email}
-          onChange={(e) => setFormData({...formData, email: e.target.value})}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           required
         />
         <input
           type="password"
           placeholder="Password"
           value={formData.password}
-          onChange={(e) => setFormData({...formData, password: e.target.value})}
+          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
           required
         />
-        <button type="submit">Login</button>
+        <button type="submit" disabled={loading}>
+          {loading ? <ClipLoader color="#fff" size={20} /> : "Login"}
+        </button>
         <p>
           Don't have an account? <Link to="/signup">Sign up</Link>
         </p>

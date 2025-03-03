@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import './Events.css';
 import Header from './Header';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ClipLoader from "react-spinners/ClipLoader";
 
 const EventList = () => {
   const [events, setEvents] = useState([]);
@@ -12,13 +12,15 @@ const EventList = () => {
   const [limit, setLimit] = useState(10); // Events per page
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
-  const [editEvent, setEditEvent] = useState(false);
+  const [editEvent, setEditEvent] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchEvents();
   }, [page, search]);
 
   const fetchEvents = async () => {
+    setLoading(true);
     try {
       const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
       const response = await fetch(`${baseUrl}/events?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`, {
@@ -30,8 +32,10 @@ const EventList = () => {
       setEvents(data);
       setRole(data?.role);
       setTotalPages(data.totalPages);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching events:', error);
+      setLoading(false);
     }
   };
 
@@ -41,7 +45,6 @@ const EventList = () => {
 
   const handleDelete = async (eventId) => {
     try {
-      debugger
       const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
       const response = await fetch(`${baseUrl}/events/${eventId}`, {
         method: 'DELETE',
@@ -57,8 +60,6 @@ const EventList = () => {
         toast.success('Event deleted successfully');
         fetchEvents(); // Refresh event list after deletion
       }
-
-
     } catch (error) {
       toast.error('Failed to delete event');
       console.error("Error deleting event:", error);
@@ -67,18 +68,41 @@ const EventList = () => {
 
   const handleUpdateEvent = async (updatedEvent) => {
     try {
+      // Create a FormData object to properly handle file uploads
+      const formData = new FormData();
+      
+      // Add basic fields to FormData
+      formData.append('eventName', updatedEvent.eventName);
+      formData.append('eventDate', new Date(updatedEvent.eventDate).toISOString());
+      formData.append('eventType', updatedEvent.eventType);
+      
+      // Add eventWebLink if it exists
+      if (updatedEvent.eventWebLink) {
+        formData.append('eventWebLink', updatedEvent.eventWebLink);
+      }
+      
+      // Handle file uploads - only append if they are actual File objects
+      if (updatedEvent.eventFile && updatedEvent.eventFile instanceof File) {
+        formData.append('eventFile', updatedEvent.eventFile);
+      }
+      
+      if (updatedEvent.attendees && updatedEvent.attendees instanceof File) {
+        formData.append('attendeeList', updatedEvent.attendees);
+      }
+
       const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
       const response = await fetch(`${baseUrl}/events/${updatedEvent._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': localStorage.getItem("token"),
-          'Content-Type': 'application/json'
+          // Note: Don't set Content-Type when using FormData, the browser will set it with the proper boundary
         },
-        body: JSON.stringify(updatedEvent)
+        body: formData
       });
 
       if (!response.ok) {
-        toast.error('Failed to update event');
+        const errorData = await response.json();
+        toast.error(`Failed to update event: ${errorData.error || 'Unknown error'}`);
         return;
       }
 
@@ -86,22 +110,25 @@ const EventList = () => {
       fetchEvents(); // Refresh event list
       setEditEvent(null); // Close modal
     } catch (error) {
-      toast.error('Failed to update event');
+      toast.error(`Failed to update event: ${error.message}`);
       console.error('Error updating event:', error);
     }
   };
 
-
-
+  // Format date for display
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
   return (
     <>
       <Header role={role} />
       <div className="events-container">
-        {/* <div className='header-flex'>
-          <h4 className="events-title">All Events</h4>
-        </div> */}
-
         <div className="header-flex">
           <h4 className="events-title">All Events</h4>
           <div>
@@ -117,10 +144,13 @@ const EventList = () => {
         </div>
 
         {
-          
+           loading ? (
+            <div className="loader-container">
+              <ClipLoader color="#00BFFF" size={50} />
+            </div>
+          ) :
           events?.events?.length === 0 ? <div className="center-container">No data found </div>:
             <>
-
               <div className="events-grid">
                 {events?.events?.map((event, index) => (
                   <div key={index + 1} className="event-card">
@@ -137,7 +167,6 @@ const EventList = () => {
                           </div>
                         )}
                         <img src={`http://localhost:5000/uploads/${event.eventFile}`} alt={event.eventName} className="event-image" />
-
                       </div>
                     </a>
                     <div className="event-details">
@@ -146,21 +175,21 @@ const EventList = () => {
                         <span className="event-name">{event.eventName}</span>
                       </div>
                       <div className="event-info">
-                        <div className="event-date">Created Date - {event.eventDate}</div>
+                        <div className="event-date">Created Date - {formatDate(event.eventDate)}</div>
                         <div className="event-attendees">
                           <span className="attendees-label">Attendees</span>
                           {/* <span className="attendees-list">{event.attendees}</span> */}
                         </div>
                       </div>
                       {
-                        role == "admin" ? <div className="event-actions">
-                          <button className="edit-button" onClick={() => setEditEvent(event)}>Edit</button>
-                          <button className="delete-button" onClick={() => handleDelete(event._id)}>Delete</button>
-                        </div> : ""
+                        role === "admin" ? (
+                          <div className="event-actions">
+                            <button className="edit-button" onClick={() => setEditEvent(event)}>Edit</button>
+                            <button className="delete-button" onClick={() => handleDelete(event._id)}>Delete</button>
+                          </div>
+                        ) : ""
                       }
-
                     </div>
-
                   </div>
                 ))}
               </div>
@@ -170,7 +199,6 @@ const EventList = () => {
                 <span>Page {page} of {totalPages}</span>
                 <button disabled={page === totalPages} onClick={() => setPage(page + 1)}>Next</button>
               </div>
-
 
               {editEvent && (
                 <>
@@ -219,6 +247,11 @@ const EventList = () => {
                         className="file-input"
                         onChange={(e) => setEditEvent({ ...editEvent, eventFile: e.target.files[0] })}
                       />
+                      {editEvent.eventFile && typeof editEvent.eventFile === 'string' && (
+                        <div className="current-file">
+                          Current file: {editEvent.eventFile}
+                        </div>
+                      )}
                     </div>
 
                     <div className="file-upload">
@@ -234,16 +267,17 @@ const EventList = () => {
                     <input
                       type="url"
                       placeholder="Event Web Link"
-                      value={editEvent.eventWebLink}
+                      value={editEvent.eventWebLink || ''}
                       onChange={(e) => setEditEvent({ ...editEvent, eventWebLink: e.target.value })}
                     />
 
-                    <button onClick={() => handleUpdateEvent(editEvent)}>Save</button>
-                    <button onClick={() => setEditEvent(null)}>Cancel</button>
+                    <div className="button-group">
+                      <button className="save-button" onClick={() => handleUpdateEvent(editEvent)}>Save</button>
+                      <button className="cancel-button" onClick={() => setEditEvent(null)}>Cancel</button>
+                    </div>
                   </div>
                 </>
               )}
-
 
               <ToastContainer />
             </>
