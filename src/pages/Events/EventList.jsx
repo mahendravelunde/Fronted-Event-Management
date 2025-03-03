@@ -68,52 +68,56 @@ const EventList = () => {
 
   const handleUpdateEvent = async (updatedEvent) => {
     try {
-      // Create a FormData object to properly handle file uploads
-      const formData = new FormData();
-      
-      // Add basic fields to FormData
-      formData.append('eventName', updatedEvent.eventName);
-      formData.append('eventDate', new Date(updatedEvent.eventDate).toISOString());
-      formData.append('eventType', updatedEvent.eventType);
-      
-      // Add eventWebLink if it exists
-      if (updatedEvent.eventWebLink) {
-        formData.append('eventWebLink', updatedEvent.eventWebLink);
-      }
-      
-      // Handle file uploads - only append if they are actual File objects
-      if (updatedEvent.eventFile && updatedEvent.eventFile instanceof File) {
-        formData.append('eventFile', updatedEvent.eventFile);
-      }
-      
-      if (updatedEvent.attendees && updatedEvent.attendees instanceof File) {
-        formData.append('attendeeList', updatedEvent.attendees);
-      }
-
-      const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
-      const response = await fetch(`${baseUrl}/events/${updatedEvent._id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': localStorage.getItem("token"),
-          // Note: Don't set Content-Type when using FormData, the browser will set it with the proper boundary
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        toast.error(`Failed to update event: ${errorData.error || 'Unknown error'}`);
+      if (!updatedEvent || !updatedEvent._id) {
+        toast.error("Invalid event data");
         return;
       }
-
-      toast.success('Event updated successfully');
+  
+      const formData = new FormData();
+  
+      // Append fields only if they exist
+      if (updatedEvent.eventName) {
+        formData.append("eventName", updatedEvent.eventName);
+      }
+      if (updatedEvent.eventType) {
+        formData.append("eventType", updatedEvent.eventType);
+      }
+      if (updatedEvent.eventWebLink) {
+        formData.append("eventWebLink", updatedEvent.eventWebLink);
+      }
+  
+      // Append files only if they are actual File objects
+      if (updatedEvent.eventFile instanceof File) {
+        formData.append("eventFile", updatedEvent.eventFile);
+      }
+      if (updatedEvent.attendees instanceof File) {
+        formData.append("attendeeList", updatedEvent.attendees);
+      }
+  
+      const baseUrl = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000/api";
+      const response = await fetch(`${baseUrl}/events/${updatedEvent._id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: formData, // No need to set 'Content-Type', FormData handles it
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast.error(`Failed to update event: ${errorData.error || "Unknown error"}`);
+        return;
+      }
+  
+      toast.success("Event updated successfully");
       fetchEvents(); // Refresh event list
       setEditEvent(null); // Close modal
     } catch (error) {
       toast.error(`Failed to update event: ${error.message}`);
-      console.error('Error updating event:', error);
+      console.error("Error updating event:", error);
     }
   };
+  
 
   // Format date for display
   const formatDate = (dateString) => {
